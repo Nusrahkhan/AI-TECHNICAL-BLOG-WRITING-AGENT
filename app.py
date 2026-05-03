@@ -19,7 +19,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -71,6 +71,14 @@ class Task(BaseModel):
     requires_research: bool = False
     requires_citations: bool = False
     requires_code: bool = False
+
+    @field_validator("bullets", mode="before")
+    @classmethod
+    def ensure_min_bullets(cls, v):
+        if isinstance(v, list) and len(v) < 3:
+            while len(v) < 3:
+                v.append("Explore this topic further.")
+        return v
 
 
 class Plan(BaseModel):
@@ -254,6 +262,7 @@ Produce a highly actionable outline for a technical blog post.
 Requirements:
 - 5-9 sections (tasks).
 - Each task: goal (1 sentence), 3-6 concrete bullets, target word count 120-350.
+- IMPORTANT: Every single task MUST have at least 3 bullets. This is a hard requirement.
 - At least 2 sections must cover: code sketch, edge cases, perf/cost, or debugging.
 
 Grounding:
